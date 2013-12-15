@@ -1,0 +1,11 @@
+TYPO3:
+  Neos:
+    modules:
+      administration:
+        submodules:
+          nodeTypeEditor:
+            label: 'Node Type Editor'
+            controller: '\Flowpack\Neos\NodeTypeEditor\Controller\StandardController'
+            description: 'The Node Type editor allows to create custom node types and customize existing node types in a graphical way.'
+            icon: 'icon-cogs'
+            resource: 'Flowpack_Neos_NodeTypeEditor_Module_Administration_NodeTypeEditor'

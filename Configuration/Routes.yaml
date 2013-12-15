@@ -1,0 +1,8 @@
+-
+  name:  'Node Types'
+  uriPattern: 'nodetypes'
+  defaults:
+    '@package':    'Flowpack.Neos.NodeTypeEditor'
+    '@controller': 'NodeType'
+    '@action':     'index'
+    '@format':     'json'

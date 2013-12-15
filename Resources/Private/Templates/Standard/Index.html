@@ -1,0 +1,265 @@
+<f:flashMessages class="flashmessages"/>
+
+<div id="nodetypeeditor"
+	 data-nodetypes-uri="{f:uri.action(action: 'index', controller: 'NodeType', package: 'Flowpack.Neos.NodeTypeEditor', format: 'json', useParentRequest: true, absolute: true)}">
+</div>
+
+<script type="text/x-handlebars" data-template-name="nodeTypes">
+<div class="neos-row-fluid">
+<div class="neos-span4">
+<h3>Available Node Types</h3>
+
+<ul>
+	{{#each}}
+		<li>
+		{{#link-to 'nodeTypes.edit' this}}
+			{{name}}
+		{{/link-to}}
+		</li>
+	{{/each}}
+</ul>
+</div>
+<div class="neos-span8">
+{{outlet}}
+</div>
+</script>
+
+<script type="text/x-handlebars" data-template-name="nodeTypes/edit">
+	<h1>Edit {{name}}</h1>
+
+	<form>
+		<fieldset>
+			<legend>General information</legend>
+
+			<label>Name</label> {{input type="text" value=name class="neos-span-4"}}
+
+			<label class="neos-checkbox">{{input type="checkbox" checked=abstract}} <span></span> This node type is <em>abstract</em>. It cannot be assigned to nodes directly, but can be used as a sub type of other nodes.</label>
+
+			<label>Group</label> {{input type="text" value=configuration.ui.group class="neos-span-4"}}
+		</fieldset>
+
+		<fieldset>
+			<legend>Inspector</legend>
+
+			<label>Label</label> {{input type="text" value=configuration.ui.label class="neos-span-4"}}
+			<label>Icon</label> {{input type="text" value=configuration.ui.icon class="neos-span-4"}}
+		</fieldset>
+
+		<fieldset>
+			<legend>Super types</legend>
+
+			<ul>
+				{{#each superType in superTypes}}
+					<li>{{superType}} <button {{action 'removeSuperType' superType}} title="Remove super type" class="icon-remove"></button></li>
+				{{/each}}
+			</ul>
+
+			{{input type="text" value=newSuperType placeholder="Node type"}} <button {{action 'addSuperType'}} class="neos-btn">Add super type</button>
+		</fieldset>
+
+		<fieldset>
+			<legend>Properties</legend>
+
+			{{#each property in properties}}
+				<div class="neos-row-fluid">
+					<div class="neos-span3"><strong>{{property.name}}</strong></div>
+					<div class="neos-span8">
+						<label>Type</label>
+						{{input type="text" value=property.type class="neos-span-5"}}
+
+						<label>Default value</label>
+						{{input type="text" value=property.defaultValue class="neos-span-5"}}
+
+						<label>Inspector label</label>
+						{{input type="text" value=property.ui.label class="neos-span-5"}}
+
+						<label>Inspector group</label>
+						{{input type="text" value=property.ui.inspector.group class="neos-span-5"}}
+
+						<label class="neos-checkbox">{{input type="checkbox" checked=property.ui.reloadIfChanged}} <span></span> Reload if changed</label>
+					</div>
+					<div class="neos-span1"><button {{action 'removeProperty' property}} title="Remove property" class="icon-remove"></button></div>
+				</div>
+			{{/each}}
+
+			{{input type="text" value=newPropertyName placeholder="Name"}} <button {{action 'addProperty'}} class="neos-btn">Add property</button>
+		</fieldset>
+
+		<fieldset>
+			<legend>Child nodes</legend>
+
+			{{#each childNode in childNodes}}
+				<div class="neos-row-fluid">
+					<div class="neos-span3"><strong>{{childNode.nodePath}}</strong></div>
+					<div class="neos-span8">
+						<label>Node type</label>
+						{{input type="text" value=childNode.type class="neos-span-5"}}
+					</div>
+					<div class="neos-span1"><button {{action 'removeChildNode' childNode}} title="Remove child node" class="icon-remove"></button></div>
+				</div>
+			{{/each}}
+			{{input type="text" value=newChildNodeNodePath placeholder="Node path"}} <button {{action 'addChildNode'}} class="neos-btn">Add child node</button>
+		</fieldset>
+
+		<p>
+			<button class="neos-btn neos-btn-primary">Save</button>
+			{{#link-to 'nodeTypes' tagName="button" class="neos-btn"}}Close{{/link-to}}
+		</p>
+	</form>
+</script>
+
+<script>
+	requirePaths = window.T3Configuration.requirejs.paths || {};
+	requirePaths['Library'] = '../Library';
+	requirePaths['text'] = '../Library/requirejs/text';
+	requirePaths['i18n'] = '../Library/requirejs/i18n';
+
+	/**
+	 * WARNING: if changing any of the require() statements below, make sure to also
+	 * update them inside build.js!
+	 */
+	require({
+		baseUrl: window.T3Configuration.neosJavascriptBasePath,
+		paths: requirePaths,
+		locale: 'en'
+	}, ['emberjs'], function(Ember) {
+		window.NodeTypeEditor = Ember.Application.create({rootElement: '#nodetypeeditor'});
+
+		NodeTypeEditor.NodeType = Ember.Object.extend({
+			name: null,
+			configuration: null,
+			abstract: null,
+			final: null,
+			declaredSuperTypes: null,
+			childNodes: null,
+			properties: null,
+
+			init: function() {
+				this._super();
+
+				this.createChildNodesFromConfiguration();
+				this.createPropertiesFromConfiguration();
+			},
+
+			createChildNodesFromConfiguration: function() {
+				var childNodeDefs = this.get('configuration.childNodes'),
+					childNodes = Ember.A();
+				if (childNodeDefs) {
+					$.each(childNodeDefs, function(key, data) {
+						data.nodePath = key;
+						var childNode = NodeTypeEditor.NodeTypeChildNode.create(data);
+						childNodes.pushObject(childNode);
+					});
+				}
+				this.set('childNodes', childNodes);
+			},
+			createPropertiesFromConfiguration: function() {
+				var propertiesDef = this.get('configuration.properties'),
+					properties = Ember.A();
+				if (propertiesDef) {
+					$.each(propertiesDef, function(key, data) {
+						data.name = key;
+						var property = NodeTypeEditor.NodeTypeProperty.create(data);
+						properties.pushObject(property);
+					});
+				}
+				this.set('properties', properties);
+			}
+		});
+
+		NodeTypeEditor.NodeTypeChildNode = Ember.Object.extend({
+			nodePath: null,
+			// A ContentCollection is a sane default
+			type: 'TYPO3.Neos:ContentCollection'
+		});
+
+		NodeTypeEditor.NodeTypeProperty = Ember.Object.extend({
+			name: null,
+			type: null,
+			defaultValue: null,
+			ui: null
+		});
+
+		NodeTypeEditor.NodeType.reopenClass({
+			findAll: function() {
+				var promise = new Ember.RSVP.Promise(function(resolve, reject){
+					$.getJSON($('#nodetypeeditor').data('nodetypes-uri')).done(function(data, status, xhr) {
+						if (data && data.nodeTypes) {
+							var nodeTypes = Ember.A();
+							$.each(data.nodeTypes, function() {
+								var nodeType = NodeTypeEditor.NodeType.create(this);
+								nodeTypes.push(nodeType);
+							});
+							resolve(nodeTypes);
+						} else {
+							reject();
+						}
+					}).fail(function() {
+						reject();
+					});
+				});
+				return promise;
+			}
+		});
+
+		NodeTypeEditor.NodeTypesEditController = Ember.ObjectController.extend({
+			addSuperType: function() {
+				this.get('model.superTypes').pushObject(this.get('newSuperType'));
+				this.set('newSuperType', null);
+			},
+			removeSuperType: function(superType) {
+				this.get('model.superTypes').removeObject(superType);
+			},
+
+			addChildNode: function() {
+				this.get('model.childNodes').pushObject(NodeTypeEditor.NodeTypeChildNode.create({
+					nodePath: this.get('newChildNodeNodePath')
+				}));
+				this.set('newChildNodeNodePath', null);
+			},
+			removeChildNode: function(childNode) {
+				this.get('model.childNodes').removeObject(childNode);
+			},
+
+			addProperty: function() {
+				this.get('model.properties').pushObject(NodeTypeEditor.NodeTypeProperty.create({
+					name: this.get('newPropertyName')
+				}));
+				this.set('newPropertyName', null);
+			},
+			removeProperty: function(property) {
+				this.get('model.properties').removeObject(property);
+			},
+
+			clearTemporaryInput: function() {
+				this.set('newChildNodeNodePath', null);
+				this.set('newPropertyName', null);
+			}
+		});
+
+		NodeTypeEditor.NodeTypesRoute = Ember.Route.extend({
+			model: function() {
+				return NodeTypeEditor.NodeType.findAll();
+			}
+		});
+
+		NodeTypeEditor.NodeTypesEditRoute = Ember.Route.extend({
+			model: function(params) {
+				var nodeTypes = this.modelFor('nodeTypes');
+				// TODO Clone this model to prevent updates to the list before saving
+				return nodeTypes.findBy('name', params.name);
+			},
+			setupController: function(controller, model) {
+				controller.set('model', model);
+				controller.clearTemporaryInput();
+			}
+		});
+
+		NodeTypeEditor.Router.map(function() {
+			this.resource('nodeTypes', {path: '/'}, function() {
+				this.route('edit', {path: '/:name'});
+			});
+		});
+
+	});
+</script>

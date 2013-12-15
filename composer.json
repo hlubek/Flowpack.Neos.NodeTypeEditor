@@ -1,0 +1,13 @@
+{
+    "name": "flowpack/neos-nodetypeeditor",
+    "type": "typo3-flow-package",
+    "description": "An interactive node type editor for TYPO3 Neos",
+    "require": {
+        "typo3/neos": "~1.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "Flowpack\\Neos\\NodeTypeEditor": "Classes"
+        }
+    }
+}

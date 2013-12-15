@@ -1,0 +1,18 @@
+#                                                                        #
+# Security policy for the Flowpack Neos NodeTypeEditor package           #
+#                                                                        #
+
+resources:
+  methods:
+    Flowpack_Neos_NodeTypeEditor_Module_Administration_NodeTypeEditor: 'method(Flowpack\Neos\NodeTypeEditor\Controller\StandardController->.*Action())'
+    Flowpack_Neos_NodeTypeEditor_Controller_NodeType: 'method(Flowpack\Neos\NodeTypeEditor\Controller\NodeTypeController->.*Action())'
+
+acls:
+
+  'TYPO3.Neos:Administrator':
+    methods:
+      Flowpack_Neos_NodeTypeEditor_Module_Administration_NodeTypeEditor: GRANT
+
+  'Everybody':
+    methods:
+      Flowpack_Neos_NodeTypeEditor_Controller_NodeType: GRANT
