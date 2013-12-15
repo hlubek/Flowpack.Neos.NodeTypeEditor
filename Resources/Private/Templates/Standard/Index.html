@@ -35,14 +35,14 @@
 
 			<label class="neos-checkbox">{{input type="checkbox" checked=abstract}} <span></span> This node type is <em>abstract</em>. It cannot be assigned to nodes directly, but can be used as a sub type of other nodes.</label>
 
-			<label>Group</label> {{input type="text" value=configuration.ui.group class="neos-span-4"}}
+			<label>Group</label> {{input type="text" value=ui.group class="neos-span-4"}}
 		</fieldset>
 
 		<fieldset>
 			<legend>Inspector</legend>
 
-			<label>Label</label> {{input type="text" value=configuration.ui.label class="neos-span-4"}}
-			<label>Icon</label> {{input type="text" value=configuration.ui.icon class="neos-span-4"}}
+			<label>Label</label> {{input type="text" value=ui.label class="neos-span-4"}}
+			<label>Icon</label> {{input type="text" value=ui.icon class="neos-span-4"}}
 		</fieldset>
 
 		<fieldset>
@@ -142,7 +142,7 @@
 			},
 
 			createChildNodesFromConfiguration: function() {
-				var childNodeDefs = this.get('configuration.childNodes'),
+				var childNodeDefs = this.get('childNodes'),
 					childNodes = Ember.A();
 				if (childNodeDefs) {
 					$.each(childNodeDefs, function(key, data) {
@@ -154,7 +154,7 @@
 				this.set('childNodes', childNodes);
 			},
 			createPropertiesFromConfiguration: function() {
-				var propertiesDef = this.get('configuration.properties'),
+				var propertiesDef = this.get('properties'),
 					properties = Ember.A();
 				if (propertiesDef) {
 					$.each(propertiesDef, function(key, data) {
@@ -186,8 +186,9 @@
 					$.getJSON($('#nodetypeeditor').data('nodetypes-uri')).done(function(data, status, xhr) {
 						if (data && data.nodeTypes) {
 							var nodeTypes = Ember.A();
-							$.each(data.nodeTypes, function() {
-								var nodeType = NodeTypeEditor.NodeType.create(this);
+							$.each(data.nodeTypes, function(nodeTypeName, nodeType) {
+								nodeType.name = nodeTypeName;
+								var nodeType = NodeTypeEditor.NodeType.create(nodeType);
 								nodeTypes.push(nodeType);
 							});
 							resolve(nodeTypes);

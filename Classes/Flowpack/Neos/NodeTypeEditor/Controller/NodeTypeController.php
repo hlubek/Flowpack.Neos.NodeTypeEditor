@@ -18,12 +18,18 @@ class NodeTypeController extends \TYPO3\Flow\Mvc\Controller\ActionController {
 	protected $nodeTypeManager;
 
 	/**
+	 * @Flow\Inject
+	 * @var ConfigurationManager
+	 */
+	protected $configurationManager;
+
+	/**
 	 * Get all registered node types
 	 *
 	 * @return void
 	 */
 	public function indexAction() {
-		$nodeTypes = $this->nodeTypeManager->getNodeTypes(TRUE);
+		$nodeTypes = $this->configurationManager->getConfiguration('NodeTypes');
 		$this->view->assign('nodeTypes', $nodeTypes);
 	}
 
