@@ -23,18 +23,10 @@ require({
 		childNodes: null,
 		properties: null,
 
-		init: function() {
-			this._super();
-
-			this.createChildNodesFromConfiguration();
-			this.createPropertiesFromConfiguration();
-		},
-
-		createChildNodesFromConfiguration: function() {
-			var childNodeDefs = this.get('childNodes'),
-				childNodes = Ember.A();
-			if (childNodeDefs) {
-				$.each(childNodeDefs, function(key, data) {
+		createChildNodesFromConfiguration: function(childNodesConfiguration) {
+			var childNodes = Ember.A();
+			if (childNodesConfiguration) {
+				$.each(childNodesConfiguration, function(key, data) {
 					data.nodePath = key;
 					var childNode = NodeTypeEditor.NodeTypeChildNode.create(data);
 					childNodes.pushObject(childNode);
@@ -42,11 +34,11 @@ require({
 			}
 			this.set('childNodes', childNodes);
 		},
-		createPropertiesFromConfiguration: function() {
-			var propertiesDef = this.get('properties'),
-				properties = Ember.A();
-			if (propertiesDef) {
-				$.each(propertiesDef, function(key, data) {
+
+		createPropertiesFromConfiguration: function(propertiesConfiguration) {
+			var properties = Ember.A();
+			if (propertiesConfiguration) {
+				$.each(propertiesConfiguration, function(key, data) {
 					data.name = key;
 					var property = NodeTypeEditor.NodeTypeProperty.create(data);
 					properties.pushObject(property);
@@ -54,6 +46,50 @@ require({
 			}
 			this.set('properties', properties);
 		}
+	});
+	NodeTypeEditor.NodeType.reopenClass({
+
+		/**
+		 * Factory method to create a NodeType from the node type raw configuration
+		 *
+		 * @param {Array} config
+		 * @returns {NodeTypeEditor.NodeType}
+		 */
+		createFromConfiguration: function(config) {
+			config = $.extend({}, config);
+			var childNodesConfiguration = config.childNodes,
+				propertiesConfiguration = config.properties;
+			delete config.childNodes;
+			delete config.properties;
+
+			var nodeType = NodeTypeEditor.NodeType.create(config);
+
+			nodeType.createChildNodesFromConfiguration(childNodesConfiguration);
+			nodeType.createPropertiesFromConfiguration(propertiesConfiguration);
+
+			return nodeType;
+		},
+
+		findAll: function() {
+			return new Ember.RSVP.Promise(function(resolve, reject) {
+				$.getJSON($('#nodetypeeditor').data('nodetypes-uri')).done(function(data) {
+					if (data && data.nodeTypes) {
+						var nodeTypes = Ember.A();
+						$.each(data.nodeTypes, function(nodeTypeName, nodeTypeConfiguration) {
+							nodeTypeConfiguration.name = nodeTypeName;
+							var nodeType = NodeTypeEditor.NodeType.createFromConfiguration(nodeTypeConfiguration);
+							nodeTypes.push(nodeType);
+						});
+						resolve(nodeTypes);
+					} else {
+						reject();
+					}
+				}).fail(function() {
+					reject();
+				});
+			});
+		}
+
 	});
 
 	NodeTypeEditor.NodeTypeChildNode = Ember.Object.extend({
@@ -67,29 +103,6 @@ require({
 		type: null,
 		defaultValue: null,
 		ui: null
-	});
-
-	NodeTypeEditor.NodeType.reopenClass({
-		findAll: function() {
-			var promise = new Ember.RSVP.Promise(function(resolve, reject){
-				$.getJSON($('#nodetypeeditor').data('nodetypes-uri')).done(function(data, status, xhr) {
-					if (data && data.nodeTypes) {
-						var nodeTypes = Ember.A();
-						$.each(data.nodeTypes, function(nodeTypeName, nodeType) {
-							nodeType.name = nodeTypeName;
-							var nodeType = NodeTypeEditor.NodeType.create(nodeType);
-							nodeTypes.push(nodeType);
-						});
-						resolve(nodeTypes);
-					} else {
-						reject();
-					}
-				}).fail(function() {
-					reject();
-				});
-			});
-			return promise;
-		}
 	});
 
 	NodeTypeEditor.NodeTypesEditController = Ember.ObjectController.extend({
